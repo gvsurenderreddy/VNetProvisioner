@@ -1,0 +1,32 @@
+{
+	"name": "vnetprovisioner",
+	"description": "virtual network provisioner (vnp) provisiones  the Virtual Network device services . Provides the RESTAPI for UI ",
+
+	"version": "0.0.1",
+	"author": "Suresh Kumar",	
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/sureshkvl/vnp.git"
+	},
+	"dependencies": {
+	"stormdata": "*",
+	"stormregistry": "*",
+	"zappajs":"*",
+	"request-json":"*",
+	"ip":"*"
+	},
+	"devDependencies": {
+		"coffee-script": ">=1.3"
+	},
+	"optionalDependencies": {},
+	"engines": {
+		"node": ">=0.6.x"
+	},
+	"main": "./lib/app",
+	"scripts": {
+		"prepublish": "mkdir -p lib; coffee -o lib -c src"		
+	},
+	"contributors": [
+		""	
+	]
+}
