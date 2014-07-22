@@ -6,6 +6,7 @@ extend = require('util')._extend
 ip = require 'ip'
 async = require 'async'
 
+vmprovision = require './vmprovisioner'
 
 class provisionerData extends StormData
 	schema =        
@@ -94,11 +95,11 @@ class Provisioner
             pvdata = new provisionerData(data.id, data )
         catch err
             util.log "invalid schema" + err
-            return callback new Error "Invalid Input "
+            return callback new Error "Invalid Input "  
         finally            
             @registry.add pvdata
             #util.log JSON.stringify pvdata.data
-            #p = new vmprovision pvdata.data
+            vmp = new vmprovision pvdata.data
             callback {"true"}
 
 

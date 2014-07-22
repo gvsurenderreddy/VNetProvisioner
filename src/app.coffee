@@ -14,11 +14,11 @@
     @post '/provision': ->       
         console.log "post provision vm received" + JSON.stringify @body        
         pv.create @body, (res) =>
-            console.log "post switch response" +res
+            console.log "post provision response" + JSON.stringify res
             @send res    
 
     @get '/provison/:id': ->
         console.log " get provison id received" 
         pv.list (res) =>
-            console.log "get switch response " + res
+            console.log "get provision response " + res
             @send res  
