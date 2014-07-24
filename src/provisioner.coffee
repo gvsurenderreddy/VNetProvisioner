@@ -100,7 +100,8 @@ class Provisioner
             @registry.add pvdata
             #util.log JSON.stringify pvdata.data
             vmp = new vmprovision pvdata.data
-            callback {"true"}
+            vmp.provision (res)=>
+                callback res
 
 
 module.exports = new Provisioner '/tmp/provisioner.db'

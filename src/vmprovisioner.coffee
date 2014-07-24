@@ -26,9 +26,20 @@ class quaggaService
             "protocol":
                 "router":"ospf",
                 "networks":[]
+
+        ripdConfig =
+            "hostname":"rip",
+            "password": "rip",
+            "enable password":"rip",
+            "log file":"/var/log/quagga/ripd.log debugging",
+            "protocol":
+                "router":"rip",
+                "networks":[]
+
         #process ifmap and updata zebraconfig
         ifarray = []
         ospfnwarray = []
+        ripdnwarray = []
         for i in ifmap
             #if i.type is not "mgmt"
             unless i.type is "mgmt" 
@@ -40,11 +51,15 @@ class quaggaService
                     "bandwidth" : 100000
                 ospfnwarray.push
                     "network" : "#{i.ipaddress}/30 area 0"  
+                ripdnwarray.push
+                    "network" : i.ifname
         console.log "zebra ifarray array" + JSON.stringify ifarray
         console.log "ospfnwarray  "+ JSON.stringify ospfnwarray
+        console.log "ripwarray  "+ JSON.stringify ripdnwarray
 
         zebraConfig.interfaces = ifarray
         ospfdConfig.protocol.networks = ospfnwarray
+        ripdConfig.protocol.networks = ripdnwarray
         #process ifmap and update ospfd config
 
 
@@ -58,45 +73,66 @@ class quaggaService
         client.post "/quagga/ospfd", ospfdConfig,(err, res, body) =>
             util.log "post ospfd result body  " + JSON.stringify body if body?
             util.log "post ospfd status code res statuscode" + res.statusCode
+
+        client.post "/quagga/ripd", ripdConfig,(err, res, body) =>
+            util.log "post ripd result body  " + JSON.stringify body if body?
+            util.log "post ripd status code res statuscode" + res.statusCode
                   
 
 
 
 class vmprovision
+    constructor : (vmdata) ->
+        @vmdata = vmdata
+        util.log "intput vmdata" + JSON.stringify @vmdata
+        @findmgmtip() 
+
     findmgmtip: ()->
         for i in @vmdata.ifmap
             if i.type is "mgmt"
                 @mgmtip = i.ipaddress
                 console.log "mgmtip" + @mgmtip
 
-    vmstatus:(callback)->        #ping the managent ip
-        #do /status from stormflash to check the reachability
-        
+    vmstatus: ()->        
+        #do /status from stormflash to check the reachability        
         @url= "http://#{@mgmtip}:5000"
-        util.log "url" + @url
+        #util.log "url" + @url
         client = request.newClient(@url)
-        client.get "/status", (err, res, body) =>
-            #util.log "get result body  " + JSON.stringify body if body?
-            util.log "get result status code res statuscode" + res.statusCode
-            @rechable = true
-            callback()
+        client.get "/status", (err, res, body) =>            
+            if res?
+                util.log "get result status code res statuscode" + res.statusCode if res.statusCode?
+                #check the response before say reachable
+                util.log "inside res condition"
+                @reachable = true 
+            else
+                @reachable = false 
+            #callback(@reachable)
 
+    provision: (callback) ->  
+        unless @mgmtip?                                  
+            return callback null 
 
-    constructor : (@vmdata) ->
-        util.log "intput vmdata" + JSON.stringify @vmdata
+        @reachable = false
+        async.until(
+            ()=>
+                return @reachable
+            (repeat)=>
+                @vmstatus()
+                setTimeout(repeat, 5000);
+            (err)=>
+                util.log "over"
+                callback
+        )
 
-        @findmgmtip()        
-        return null unless @mgmtip?
-
-        #check the reachabiltiy by querying the status
-        @vmstatus ()->
         console.log "Services " + JSON.stringify @vmdata.Services
+        
         #start provisioning
         for service in @vmdata.Services
             console.log "service" + JSON.stringify service
             switch service.name
                 when 'quagga'   
-                    quaggaobj = new quaggaService @url,vmdata.ifmap
+                    quaggaobj = new quaggaService @url, @vmdata.ifmap
 
+        callback (true)
 
 module.exports = vmprovision
