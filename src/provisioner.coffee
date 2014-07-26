@@ -79,6 +79,7 @@ class provisionerRegistry extends StormRegistry
 class Provisioner
 
     constructor :(filename) ->
+        @vmpobj = []
         @registry = new provisionerRegistry filename
 
         @registry.on 'load',(key,val) ->
@@ -100,8 +101,27 @@ class Provisioner
             @registry.add pvdata
             #util.log JSON.stringify pvdata.data
             vmp = new vmprovision pvdata.data
+            @vmpobj.push vmp
             vmp.provision (res)=>
                 callback res
+
+    stats: (data, callback) ->
+        obj = @getobjbyid(data)
+        if obj?
+            obj.statistics (res)=>
+                console.log "statistics output " + JSON.stringify   res
+                callback res
+        else                
+            return callback new Error "Unknown Device ID"
+
+    getobjbyid:(id) ->
+        for obj in @vmpobj
+            util.log "vmpobj" + obj.uuid
+            if  obj.uuid is id
+                util.log "getObjbyid found " + obj.uuid
+                return obj
+        return null
+
 
 
 module.exports = new Provisioner '/tmp/provisioner.db'

@@ -67,23 +67,29 @@ class quaggaService
         client = request.newClient(@url)
         client.post "/quagga/zebra", zebraConfig,(err, res, body) =>
             util.log "post zebra result body  " + JSON.stringify body if body?
-            util.log "post zebra status code res statuscode" + res.statusCode
+            util.log "post zebra status code res statuscode" + res.statusCode if res.statusCode?
             
 
         client.post "/quagga/ospfd", ospfdConfig,(err, res, body) =>
             util.log "post ospfd result body  " + JSON.stringify body if body?
-            util.log "post ospfd status code res statuscode" + res.statusCode
+            util.log "post ospfd status code res statuscode" + res.statusCode if res.statusCode?
 
         client.post "/quagga/ripd", ripdConfig,(err, res, body) =>
             util.log "post ripd result body  " + JSON.stringify body if body?
-            util.log "post ripd status code res statuscode" + res.statusCode
+            util.log "post ripd status code res statuscode" + res.statusCode if res.statusCode?
                   
 
 
 
 class vmprovision
     constructor : (vmdata) ->
+        @uuid = vmdata.id
+        @linkstats = []
+        @routestats = []
+        @osstatus = []
         @vmdata = vmdata
+        @uuid = vmdata.id
+
         util.log "intput vmdata" + JSON.stringify @vmdata
         @findmgmtip() 
 
@@ -93,10 +99,27 @@ class vmprovision
                 @mgmtip = i.ipaddress
                 console.log "mgmtip" + @mgmtip
 
-    vmstatus: ()->        
-        #do /status from stormflash to check the reachability        
-        @url= "http://#{@mgmtip}:5000"
-        #util.log "url" + @url
+    getLinkStats: (callback)->        
+        @url= "http://#{@mgmtip}:5000"        
+        client = request.newClient(@url)
+        client.get "/netstats/link", (err, res, body) =>            
+            if res?
+                util.log "get result status code res statuscode" + res.statusCode if res.statusCode?            
+                @linkstats = body if body?
+                util.log "linkstats "+ JSON.stringify @linkstats
+                callback @linkstats
+
+    getRouteStats: (callback)->        
+        @url= "http://#{@mgmtip}:5000"        
+        client = request.newClient(@url)
+        client.get "/netstats/route", (err, res, body) =>            
+            if res?
+                util.log "get result status code res statuscode" + res.statusCode if res.statusCode?            
+                @routestats = body if body?
+                callback @routestats
+            
+    vmstatus: (callback) ->                
+        @url= "http://#{@mgmtip}:5000"        
         client = request.newClient(@url)
         client.get "/status", (err, res, body) =>            
             if res?
@@ -104,12 +127,29 @@ class vmprovision
                 #check the response before say reachable
                 util.log "inside res condition"
                 @reachable = true 
+                @osstatus = body if body?
+                callback  
             else
                 @reachable = false 
-            #callback(@reachable)
+                callback 
+            
+    statistics: (callback) ->
+        #async parallel to be used here and call one by one
+        util.log "statistics called"
+        @getLinkStats (result) =>
+            @getRouteStats (result1) =>                
+                callback 
+                    "linkstats" : result
+                    "routestats" : result1
+                    
+        #    @getRouteStats () =>               
+        #            callback
+        #                "osstats" :  @osstatus
+        #                "linkstats" : @linkstats
+        #                "routestats" : @routestats
 
     provision: (callback) ->  
-        unless @mgmtip?                                  
+        unless @mgmtip?                                      
             return callback null 
 
         @reachable = false
@@ -117,7 +157,7 @@ class vmprovision
             ()=>
                 return @reachable
             (repeat)=>
-                @vmstatus()
+                @vmstatus () =>
                 setTimeout(repeat, 5000);
             (err)=>
                 util.log "over"
@@ -125,14 +165,13 @@ class vmprovision
         )
 
         console.log "Services " + JSON.stringify @vmdata.Services
-        
         #start provisioning
         for service in @vmdata.Services
             console.log "service" + JSON.stringify service
             switch service.name
                 when 'quagga'   
                     quaggaobj = new quaggaService @url, @vmdata.ifmap
-
         callback (true)
+
 
 module.exports = vmprovision
