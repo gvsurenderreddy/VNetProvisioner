@@ -102,9 +102,10 @@ class Provisioner
             #util.log JSON.stringify pvdata.data
             vmp = new vmprovision pvdata.data
             @vmpobj.push vmp
-            vmp.provision (res)=>
+            vmp.provision (res)=>                
                 callback res
 
+    #API for collecting the device link statistics
     stats: (data, callback) ->
         obj = @getobjbyid(data)
         if obj?

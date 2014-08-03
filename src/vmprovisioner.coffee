@@ -7,78 +7,7 @@ extend = require('util')._extend
 ip = require 'ip'
 async = require 'async'
 
-class quaggaService
-    constructor: (@url, ifmap)->
-        console.log "quaggaservice url is "+ @url
-        console.log "quaggaservice ifmap is "+ JSON.stringify ifmap
-        zebraConfig =
-            "hostname":"zebra",
-            "password": "zebra",
-            "enable password":"password",
-            "log file":"/var/log/quagga/ospfd.log debugging",
-            "interfaces":[]
-            "iproutes":[] 
-        ospfdConfig =
-            "hostname":"ospf",
-            "password": "ospf",
-            "enable password":"ospf",
-            "log file":"/var/log/quagga/ospfd.log debugging",
-            "protocol":
-                "router":"ospf",
-                "networks":[]
-
-        ripdConfig =
-            "hostname":"rip",
-            "password": "rip",
-            "enable password":"rip",
-            "log file":"/var/log/quagga/ripd.log debugging",
-            "protocol":
-                "router":"rip",
-                "networks":[]
-
-        #process ifmap and updata zebraconfig
-        ifarray = []
-        ospfnwarray = []
-        ripdnwarray = []
-        for i in ifmap
-            #if i.type is not "mgmt"
-            unless i.type is "mgmt" 
-                ifarray.push 
-                    "interface" : i.ifname
-                    "description" : i.brname
-                    # To : interface.netmask to be converted as prefix, currenty hardcoding
-                    "ip address" : "#{i.ipaddress}/30"  
-                    "bandwidth" : 100000
-                ospfnwarray.push
-                    "network" : "#{i.ipaddress}/30 area 0"  
-                ripdnwarray.push
-                    "network" : i.ifname
-        console.log "zebra ifarray array" + JSON.stringify ifarray
-        console.log "ospfnwarray  "+ JSON.stringify ospfnwarray
-        console.log "ripwarray  "+ JSON.stringify ripdnwarray
-
-        zebraConfig.interfaces = ifarray
-        ospfdConfig.protocol.networks = ospfnwarray
-        ripdConfig.protocol.networks = ripdnwarray
-        #process ifmap and update ospfd config
-
-
-
-        client = request.newClient(@url)
-        client.post "/quagga/zebra", zebraConfig,(err, res, body) =>
-            util.log "post zebra result body  " + JSON.stringify body if body?
-            util.log "post zebra status code res statuscode" + res.statusCode if res.statusCode?
-            
-
-        client.post "/quagga/ospfd", ospfdConfig,(err, res, body) =>
-            util.log "post ospfd result body  " + JSON.stringify body if body?
-            util.log "post ospfd status code res statuscode" + res.statusCode if res.statusCode?
-
-        client.post "/quagga/ripd", ripdConfig,(err, res, body) =>
-            util.log "post ripd result body  " + JSON.stringify body if body?
-            util.log "post ripd status code res statuscode" + res.statusCode if res.statusCode?
-                  
-
+QuaggaService = require './quaggaservice'
 
 
 class vmprovision
@@ -133,6 +62,7 @@ class vmprovision
                 @reachable = false 
                 callback 
             
+    #refactoring required
     statistics: (callback) ->
         #async parallel to be used here and call one by one
         util.log "statistics called"
@@ -141,37 +71,67 @@ class vmprovision
                 callback 
                     "linkstats" : result
                     "routestats" : result1
-                    
-        #    @getRouteStats () =>               
-        #            callback
-        #                "osstats" :  @osstatus
-        #                "linkstats" : @linkstats
-        #                "routestats" : @routestats
+
+
+    # provision steps
+    # 1. mgmt ip is required to provision
+    # ??
 
     provision: (callback) ->  
         unless @mgmtip?                                      
-            return callback null 
+            return callback 
+                id : @uuid
+                status : "provision-failed"
+                reason : "mgmt ip not available"
 
         @reachable = false
+        @retries = 0
+        #currently reachability check is happening infinetlye. this needs to be changed in to fixed iterations
         async.until(
             ()=>
-                return @reachable
+                return @reachable or @retries > 10
             (repeat)=>
                 @vmstatus () =>
+                @retries++
                 setTimeout(repeat, 5000);
             (err)=>
                 util.log "over"
                 callback
         )
 
-        console.log "Services " + JSON.stringify @vmdata.Services
+        if @reachable is false
+            return callback 
+                id : @uuid
+                status : "provision-failed"
+                reason : "failed to talk to stormflash"
+
+        console.log "Start Provisioning the Services " + JSON.stringify @vmdata.Services
+
         #start provisioning
         for service in @vmdata.Services
             console.log "service" + JSON.stringify service
             switch service.name
                 when 'quagga'   
-                    quaggaobj = new quaggaService @url, @vmdata.ifmap
-        callback (true)
+                    quaggaobj = new QuaggaService @url, @vmdata.ifmap
+                when 'openvpn'
+                    console.log "openvpns service"
+                    #Todo
+                when 'strongswan'
+                    console.log "strongswan service"
+                    #Todo
+                when 'iptables'
+                    console.log "iptables service"
+                    #Todo
+                when 'snort'
+                    console.log "snort service"
+                    #Todo
+                when 'iproute2'
+                    console.log "iproute2 service"
+                    #Todo
+
+        callback 
+            id : @uuid
+            status : "provisioned"
 
 
 module.exports = vmprovision
