@@ -61,22 +61,21 @@ class quaggaService
         ripdConfig.protocol.networks = ripdnwarray
         #process ifmap and update ospfd config
 
-
-
         client = request.newClient(@url)
         client.post "/quagga/zebra", zebraConfig,(err, res, body) =>
+            util.log "post zebra Err  " + err if err?
             util.log "post zebra result body  " + JSON.stringify body if body?
-            util.log "post zebra status code res statuscode" + res.statusCode if res.statusCode?
+            util.log "post zebra status code res statuscode" + res.statusCode if res?.statusCode?
             
 
         client.post "/quagga/ospfd", ospfdConfig,(err, res, body) =>
+            util.log "post ospfd Err  " + err if err?
             util.log "post ospfd result body  " + JSON.stringify body if body?
-            util.log "post ospfd status code res statuscode" + res.statusCode if res.statusCode?
+            util.log "post ospfd status code res statuscode" + res.statusCode if res?.statusCode?
 
         client.post "/quagga/ripd", ripdConfig,(err, res, body) =>
+            util.log "post ripd Err  " + err if err?
             util.log "post ripd result body  " + JSON.stringify body if body?
-            util.log "post ripd status code res statuscode" + res.statusCode if res.statusCode?
-                  
-
+            util.log "post ripd status code res statuscode" + res.statusCode if res?.statusCode?                
 
 module.exports = quaggaService

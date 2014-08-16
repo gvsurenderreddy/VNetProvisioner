@@ -18,7 +18,7 @@ class vmprovision
         @osstatus = []
         @vmdata = vmdata
         @uuid = vmdata.id
-
+        @reachable = false
         util.log "intput vmdata" + JSON.stringify @vmdata
         @findmgmtip() 
 
@@ -48,6 +48,7 @@ class vmprovision
                 callback @routestats
             
     vmstatus: (callback) ->                
+        util.log "vmstatus is called"
         @url= "http://#{@mgmtip}:5000"        
         client = request.newClient(@url)
         client.get "/status", (err, res, body) =>            
@@ -84,26 +85,25 @@ class vmprovision
                 status : "provision-failed"
                 reason : "mgmt ip not available"
 
-        @reachable = false
-        @retries = 0
+        
+        @reachable = false 
         #currently reachability check is happening infinetlye. this needs to be changed in to fixed iterations
         async.until(
             ()=>
-                return @reachable or @retries > 10
-            (repeat)=>
-                @vmstatus () =>
-                @retries++
+                return @reachable 
+            (repeat)=>                
+                @vmstatus ()->
                 setTimeout(repeat, 5000);
             (err)=>
                 util.log "over"
                 callback
         )
 
-        if @reachable is false
-            return callback 
-                id : @uuid
-                status : "provision-failed"
-                reason : "failed to talk to stormflash"
+        #if @reachable is false
+        #    return callback 
+        #        id : @uuid
+        #        status : "provision-failed"
+        #        reason : "failed to talk to stormflash"
 
         console.log "Start Provisioning the Services " + JSON.stringify @vmdata.Services
 
@@ -113,21 +113,22 @@ class vmprovision
             switch service.name
                 when 'quagga'   
                     quaggaobj = new QuaggaService @url, @vmdata.ifmap
-                when 'openvpn'
-                    console.log "openvpns service"
-                    #Todo
-                when 'strongswan'
-                    console.log "strongswan service"
-                    #Todo
-                when 'iptables'
-                    console.log "iptables service"
-                    #Todo
-                when 'snort'
-                    console.log "snort service"
-                    #Todo
-                when 'iproute2'
-                    console.log "iproute2 service"
-                    #Todo
+                #when 'openvpn'
+                #    console.log "openvpns service"
+                #    #Todo
+                #when 'strongswan'
+                #    console.log "strongswan service"
+                #    #Todo
+                #when 'iptables'
+                #    console.log "iptables service"
+                #    #Todo
+                #when 'snort'
+                #    console.log "snort service"
+                #    #Todo
+                #when 'iproute2'
+                #    console.log "iproute2 service"
+                
+                #    #Todo
 
         callback 
             id : @uuid
