@@ -41,7 +41,7 @@ class quaggaService
         ripdnwarray = []
         for i in ifmap
             #if i.type is not "mgmt"
-            unless i.type is "mgmt" 
+            if i.type is "wan" 
                 ifarray.push 
                     "interface" : i.ifname
                     "description" : i.brname

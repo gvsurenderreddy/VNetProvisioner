@@ -1,4 +1,3 @@
-
 StormRegistry = require 'stormregistry'
 StormData = require 'stormdata'
 util = require('util')
@@ -27,6 +26,25 @@ class vmprovision
             if i.type is "mgmt"
                 @mgmtip = i.ipaddress
                 console.log "mgmtip" + @mgmtip
+
+    configLinkChars: (callback)->
+        for i in @vmdata.ifmap
+            unless i.type is "mgmt"
+                @url= "http://#{@mgmtip}:5000"        
+                client = request.newClient(@url)
+                cfg =
+                    ifname: i.ifname
+                    bandwidth: i.config.bandwidth
+                    latency: i.config.latency
+                    jitter: i.config.jitter
+                    pktloss: i.config.pktloss
+                util.log "linkconfig input is " + JSON.stringify cfg
+                client.post  "/linkconfig", cfg, (err, res, body) =>            
+                    if res?
+                        util.log "get result status code res statuscode" + res.statusCode if res.statusCode?            
+                        @linkstats = body if body?
+                        util.log "linkconfig result "+ JSON.stringify @linkstats
+        callback true
 
     getLinkStats: (callback)->        
         @url= "http://#{@mgmtip}:5000"        
@@ -106,6 +124,10 @@ class vmprovision
         #        reason : "failed to talk to stormflash"
 
         console.log "Start Provisioning the Services " + JSON.stringify @vmdata.Services
+        
+        #configure the link characteristics
+        @configLinkChars (result)=>
+            console.log "configLinkChars result " + result
 
         #start provisioning
         for service in @vmdata.Services

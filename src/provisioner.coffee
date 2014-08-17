@@ -11,8 +11,7 @@ vmprovision = require './vmprovisioner'
 class provisionerData extends StormData
 	schema =        
         name: "node"
-        type: "object"
-        required: true
+        type: "object"        
         properties:
             id : {type:"string", required:true}
             name: {type:"string", required:true}
@@ -37,8 +36,15 @@ class provisionerData extends StormData
                         brname: {type:"string","required":false}
                         ipaddress:{type:"string","required":true}
                         netmask:{type:"string","required":true}
-                        gateway:{tye:"string","required":false}
-                        type:{tye:"string","required":true}
+                        gateway:{type:"string","required":false}
+                        type:{type:"string","required":true}
+                        config : 
+                            type: "object"
+                            properties:
+                                bandwidth:           {"type":"string", "required":true}                                        
+                                latency:        {"type":"string", "required":true}  
+                                jitter:        {"type":"string", "required":true}  
+                                pktloss:        {"type":"string", "required":true}  
 
     constructor: (id, data) ->
         super id, data, schema
