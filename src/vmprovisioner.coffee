@@ -29,7 +29,7 @@ class vmprovision
 
     configLinkChars: (callback)->
         for i in @vmdata.ifmap
-            unless i.type is "mgmt"
+            if i.type is "wan"
                 @url= "http://#{@mgmtip}:5000"        
                 client = request.newClient(@url)
                 cfg =
