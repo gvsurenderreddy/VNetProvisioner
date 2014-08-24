@@ -24,7 +24,9 @@ class provisionerData extends StormData
                     required: true                                    
                     properties:
                         name:           {"type":"string", "required":true}                                        
-                        enabled:        {"type":"boolean", "required":true}                                
+                        #enabled:        {"type":"boolean", "required":false}                                
+                        config: 
+                            type: "object"
             ifmap:
                 type: "array"
                 items:

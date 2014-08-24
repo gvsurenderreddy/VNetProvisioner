@@ -7,7 +7,7 @@ ip = require 'ip'
 async = require 'async'
 
 QuaggaService = require './quaggaservice'
-
+openvpnService = require './openvpnservice'
 
 class vmprovision
     constructor : (vmdata) ->
@@ -135,9 +135,13 @@ class vmprovision
             switch service.name
                 when 'quagga'   
                     quaggaobj = new QuaggaService @url, @vmdata.ifmap
-                #when 'openvpn'
-                #    console.log "openvpns service"
-                #    #Todo
+                    quaggaobj.start()
+
+                when 'openvpn'
+                    console.log "openvpns service" + service
+                    openvpnobj = new openvpnService @url, service.config
+                    openvpnobj.start()
+                    
                 #when 'strongswan'
                 #    console.log "strongswan service"
                 #    #Todo
