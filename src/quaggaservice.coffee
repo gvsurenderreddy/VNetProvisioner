@@ -20,10 +20,10 @@ class quaggaService
             util.log "post ospfd result body  " + JSON.stringify body if body?
             util.log "post ospfd status code res statuscode" + res.statusCode if res?.statusCode?
 
-        client.post "/quagga/ripd", @ripdConfig,(err, res, body) =>
-            util.log "post ripd Err  " + err if err?
-            util.log "post ripd result body  " + JSON.stringify body if body?
-            util.log "post ripd status code res statuscode" + res.statusCode if res?.statusCode?                
+        #client.post "/quagga/ripd", @ripdConfig,(err, res, body) =>
+        #    util.log "post ripd Err  " + err if err?
+        #    util.log "post ripd result body  " + JSON.stringify body if body?
+        #    util.log "post ripd status code res statuscode" + res.statusCode if res?.statusCode?                
 
     stop: ()->    
 
@@ -36,14 +36,14 @@ class quaggaService
             "hostname":"zebra",
             "password": "zebra",
             "enable password":"password",
-            "log file":"/var/log/quagga/ospfd.log debugging",
+            "log file":"/var/log/zebra.log debugging",
             "interfaces":[]
             "iproutes":[] 
         @ospfdConfig =
             "hostname":"ospf",
             "password": "ospf",
             "enable password":"ospf",
-            "log file":"/var/log/quagga/ospfd.log debugging",
+            "log file":"/var/log/ospfd.log debugging",
             "protocol":
                 "router":"ospf",
                 "networks":[]
@@ -52,7 +52,7 @@ class quaggaService
             "hostname":"rip",
             "password": "rip",
             "enable password":"rip",
-            "log file":"/var/log/quagga/ripd.log debugging",
+            "log file":"/var/log/ripd.log debugging",
             "protocol":
                 "router":"rip",
                 "networks":[]
