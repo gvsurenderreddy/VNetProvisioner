@@ -24,7 +24,7 @@ class openvpnService
         console.log "openvpn url is "+ @url        
         @openvpnServerConfig = extend {}, config.server if config?.server?           
         @openvpnClientConfig = extend {}, config.server if config?.client?              
-        util.log "openvpnServerConfig " + @openvpnServerConfig
+        util.log "openvpnServerConfig   " + @openvpnServerConfig
         util.log "openvpnClientConfig " + @openvpnClientConfig
 
 module.exports = openvpnService
