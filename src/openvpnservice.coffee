@@ -16,6 +16,12 @@ class openvpnService
                 util.log "post openvpn result body  " + JSON.stringify body if body?
                 util.log "post openvpn status code res statuscode" + res.statusCode if res?.statusCode?
         
+        if @openvpnClientConfig?
+            client = request.newClient(@url)
+            client.post "/openvpn/client", @openvpnClientConfig,(err, res, body) =>
+                util.log "post openvpn client Err  " + err if err?
+                util.log "post openvpn result body  " + JSON.stringify body if body?
+                util.log "post openvpn status code res statuscode" + res.statusCode if res?.statusCode?
     stop: ()->    
 
     update: ()->
