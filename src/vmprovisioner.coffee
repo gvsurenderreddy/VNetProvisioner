@@ -19,7 +19,11 @@ class vmprovision
         @uuid = vmdata.id
         @reachable = false
         util.log "intput vmdata" + JSON.stringify @vmdata
+
+        @serviceobj = {}
+
         @findmgmtip() 
+
 
     findmgmtip: ()->
         for i in @vmdata.ifmap
@@ -92,6 +96,12 @@ class vmprovision
                     "routestats" : result1
 
 
+    getService: (serviceid, callback) ->
+        obj = @serviceobj[serviceid]
+        if obj?
+            obj.getService (res) =>
+                callback res
+
     # provision steps
     # 1. mgmt ip is required to provision
     # ??
@@ -135,12 +145,16 @@ class vmprovision
             switch service.name
                 when 'quagga'   
                     quaggaobj = new QuaggaService @url, @vmdata.ifmap
+                    service.id = quaggaobj.getuuid()
                     quaggaobj.start()
+                    @serviceobj[service.id] = quaggaobj 
 
                 when 'openvpn'
                     console.log "openvpns service" + service
                     openvpnobj = new openvpnService @url, service.config
+                    service.id = openvpnobj.getuuid()
                     openvpnobj.start()
+                    @serviceobj[service.id] = openvpnobj 
                     
                 #when 'strongswan'
                 #    console.log "strongswan service"
@@ -157,7 +171,8 @@ class vmprovision
                 #    #Todo
 
         callback 
-            id : @uuid
+            id : @uuid 
+            data : @vmdata           
             status : "provisioned"
 
 

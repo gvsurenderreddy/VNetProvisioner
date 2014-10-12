@@ -10,7 +10,8 @@
     @enable 'serve jquery', 'minify'
 
     pv = require('./provisioner')
-
+    
+    pvobjs = {}
 
     @get '/provision/:id': ->
         console.log " get provison id received" 
@@ -35,3 +36,21 @@
         pv.stats @params.id, (res) =>
             console.log "get provision stats response " + JSON.stringify res
             @send res  
+
+
+    #service specific functions
+    @get '/provision/:pid/service/:sid': ->
+        console.log " get service provision id received" 
+        pv.serviceget @params.pid, @params.sid, (res) =>
+            console.log "get provision id response " + res
+
+            #Todo
+            #Merge the  @body in to the Services array using fmerge
+            
+            return @send res    
+        return "Error"
+
+    @get '/device/:pid/service': ->
+    @get '/device/:pid/service/:id': ->
+
+

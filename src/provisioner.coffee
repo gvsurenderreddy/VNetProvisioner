@@ -123,6 +123,19 @@ class Provisioner
         else                
             return callback new Error "Unknown Device ID"
 
+
+    #API for collecting the device link statistics
+    serviceget: (provisionerid, serviceid, callback) ->
+        obj = @getobjbyid(provisionerid)
+        if obj?
+            #obj.statistics (res)=>
+            obj.getService serviceid , (res) =>
+                console.log "service  output " + JSON.stringify   res
+                callback res
+        else                
+            return callback new Error "Unknown Device ID"
+
+
     getobjbyid:(id) ->
         for obj in @vmpobj
             util.log "vmpobj" + obj.uuid
