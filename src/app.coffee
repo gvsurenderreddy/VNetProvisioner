@@ -1,13 +1,7 @@
-{@app} = require('zappajs') 5671, ->
-    @configure =>
-      @use 'bodyParser', 'methodOverride', @app.router, 'static'
-      @set 'basepath': '/v1.0'
-
-    @configure
-      development: => @use errorHandler: {dumpExceptions: on, showStack: on}
-      production: => @use 'errorHandler'
-
-    @enable 'serve jquery', 'minify'
+{@app} = require('zappajs') 5681, ->
+    bp = require 'body-parser'
+    @use bp.urlencoded extended:false
+    @use bp.json()
 
     pv = require('./provisioner')
     
